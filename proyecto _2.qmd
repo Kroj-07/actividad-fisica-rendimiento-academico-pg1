@@ -1,0 +1,440 @@
+---
+title: "proyecto_2"
+format: html
+editor: visual
+---
+
+## Librerias
+
+```{r}
+library(fitdistrplus)
+library(readr)
+library(tidyverse)
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(vistime)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(patchwork)
+library(rlang)
+```
+
+## Carga de datos
+
+```{r}
+dt_sucios = read_csv("Estadística proyecto (Respuestas) - Respuestas de formulario 3.csv")
+```
+
+## Selecion de columnas utiles
+
+```{r}
+names(dt_sucios)
+```
+
+```{r}
+dt_sec <- dt_sucios[, c(4, 8, 12, 13, 15, 18, 24, 28, 29, 30)]
+dt_sec
+```
+
+## Renombramieto de columnas
+
+```{r}
+colnames(dt_sec) <- c("Sexo", "Carrera", "Promedio ponderado", "Ranking", "Tipo AF", "Frecuencia AF", "Nivel de consentración", "Horas de sueño", "Calidad de sueño", "Nivel estres")
+
+dt_sec
+```
+
+## Estudio y limpieza de datos
+
+```{r}
+glimpse(dt_sec)
+```
+
+### Conteo de valores null
+
+```{r}
+colSums(is.na(dt_sec))
+```
+
+### Valores faltantes
+
+```{r}
+n <- nrow(dt_sucios)
+
+tabla_na_inicial <- dt_sucios %>%
+  summarise(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(everything(),
+               names_to = "Variable",
+               values_to = "N_NAs") %>%
+  mutate(
+    muestra_efectiva = n - N_NAs,
+    Porcentaje_NA = round(100 * N_NAs / n, 2)
+  ) %>%
+  arrange(desc(Porcentaje_NA))
+
+tabla_na_inicial %>%
+  kable(
+    col.names = c("Variable", "Perdida",
+                  "Muestra efectiva", "% Faltantes"),
+    booktabs = TRUE,
+    align = "lccc"
+  ) %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                full_width = FALSE) %>%
+  row_spec(0, bold = TRUE) %>%
+  footnote(
+    general = paste0(
+      "El % de Faltantes da la proporción de datos no registrados ",
+      "sobre la muestra inicial (n = ", n, ")."
+    )
+  )
+```
+
+```{r}
+dt_sec %>%
+  mutate(id_fila = row_number()) %>%
+  mutate(across(-id_fila, as.character)) %>% 
+  
+  pivot_longer(-id_fila, names_to = "Variable", values_to = "Valor") %>%
+  mutate(es_NA = is.na(Valor)) %>% 
+  
+  ggplot(aes(x = Variable, y = id_fila, fill = es_NA)) +
+  geom_tile() +
+  scale_fill_manual(values = c("grey90", "red"), labels = c("Presente", "Faltante")) +
+  labs(
+    x = "Variables",
+    y = "Estudiante",
+    fill = "Estado",
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+
+### Observación de valores únicos
+
+```{r}
+unique(dt_sec$`Promedio ponderado`)
+```
+
+```{r}
+unique(dt_sec$`Frecuencia AF`)
+```
+
+### Limpieza de Promedio Ponderado
+
+```{r}
+summary(dt_sec$`Promedio ponderado`)
+```
+
+```{r}
+boxplot(dt_sec$`Promedio ponderado`, horizontal = T)
+```
+
+```{r}
+dt_cl <-dt_sec
+dt_cl[dt_cl$`Promedio ponderado` > 20, "Promedio ponderado"] <- NA
+```
+
+```{r}
+dt_cl$`Promedio ponderado` <- round(dt_cl$`Promedio ponderado`, 2)
+```
+
+```{r}
+summary(dt_cl$`Promedio ponderado`)
+```
+
+### Limpiando frecuencia
+
+```{r}
+summary(dt_cl$`Frecuencia AF`)
+```
+
+```{r}
+dt_cl[which(dt_cl$`Frecuencia AF` > 7), "Frecuencia AF"] <- NA
+
+dt_cl[which(dt_cl$`Frecuencia AF` < 0 ), "Frecuencia AF"] <- NA
+```
+
+```{r}
+summary(dt_cl$`Frecuencia AF`)
+```
+
+## Datos nulos luego de la limpieza
+
+```{r}
+n <- nrow(dt_cl)
+
+tabla_na_inicial <- dt_cl %>%
+  summarise(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(everything(),
+               names_to = "Variable",
+               values_to = "N_NAs") %>%
+  mutate(
+    muestra_efectiva = n - N_NAs,
+    Porcentaje_NA = round(100 * N_NAs / n, 2)
+  ) %>%
+  arrange(desc(Porcentaje_NA))
+
+tabla_na_inicial %>%
+  kable(
+    col.names = c("Variable", "Perdida",
+                  "Muestra efectiva", "% Faltantes"),
+    booktabs = TRUE,
+    align = "lccc"
+  ) %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                full_width = FALSE) %>%
+  row_spec(0, bold = TRUE) %>%
+  footnote(
+    general = paste0(
+      "El % de Faltantes da la proporción de datos no registrados ",
+      "sobre la muestra inicial (n = ", n, ")."
+    )
+  )
+```
+
+## Analisis univariado
+
+#### Descriptive table
+
+```{r}
+descriptive_table <- function(data, var, digits = 2) {
+  var <- enquo(var)
+
+  data %>%
+    summarise(
+      Cantidad  = sum(!is.na(!!var)),
+      Promedio  = mean(!!var, na.rm = TRUE),
+      `Desviación Estandar` = sd(!!var, na.rm = TRUE),
+      CV = sd(!!var, na.rm = TRUE) / mean(!!var, na.rm = TRUE),
+      Q1        = quantile(!!var, 0.25, na.rm = TRUE),
+      Mediana   = median(!!var, na.rm = TRUE),  
+      Q3        = quantile(!!var, 0.75, na.rm = TRUE),
+      Mínimo    = min(!!var, na.rm = TRUE),
+      Máximo    = max(!!var, na.rm = TRUE)
+    ) %>%
+    kable(
+      digits = digits,
+      align = "c",
+      booktabs = TRUE
+    ) %>%
+    kable_styling(full_width = FALSE, position = "center")
+}
+```
+
+#### Plot hist box
+
+```{r}
+plot_hist_box <- function(data, x_var, bins = 30, include_na = TRUE,
+                                  monochrome = FALSE, xlab = NULL,
+                                  show_mean = FALSE) {
+  x_sym <- rlang::ensym(x_var) 
+  x_str <- rlang::as_string(x_sym)
+  
+  plot_data <- data
+  if (!include_na) {
+    plot_data <- plot_data %>% filter(!is.na({{ x_var }}))
+  }
+
+  x_vec <- plot_data[[x_str]]
+  mu <- if (show_mean) mean(x_vec, na.rm = TRUE) else NULL
+
+  common_limits <- range(x_vec, na.rm = TRUE)
+  
+  fill_color <- if (monochrome) "#66a6fa" else RColorBrewer::brewer.pal(3, "Pastel1")[2]
+  current_xlab <- if (is.null(xlab)) x_str else xlab
+
+  p1 <- ggplot(plot_data, aes(x = {{ x_var }})) +
+    geom_histogram(bins = bins, fill = fill_color, color = "white", alpha = 0.8) +
+    coord_cartesian(xlim = common_limits, expand = TRUE) +
+    theme_minimal() +
+    labs(x = NULL, y = "Frecuencia") +
+    theme(
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      plot.margin = margin(b = 0, r = 5, l = 5, t = 5) 
+    )
+
+  if (show_mean) {
+    p1 <- p1 +
+      geom_vline(xintercept = mu, color = "#400d8c", linewidth = 0.9) +
+      annotate("text", x = mu, y = Inf, label = paste0("Mean\n(", round(mu, 2), ")"),
+               hjust = -0.1, vjust = 1.2, color = "#400d8c", size = 4)
+  }
+
+  p2 <- ggplot(plot_data, aes(x = {{ x_var }})) +
+    geom_boxplot(fill = fill_color, alpha = 0.7, outlier.color = "red", outlier.shape = 1) +
+    coord_cartesian(xlim = common_limits, expand = TRUE) +
+    theme_minimal() +
+    labs(x = current_xlab, y = "") +
+    theme(
+      axis.text.y = element_blank(),
+      axis.ticks.y = element_blank(),
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor.y = element_blank(),
+      plot.margin = margin(t = 0, r = 5, l = 5, b = 5) 
+    )
+  p1 / p2 + 
+    plot_layout(heights = c(9, 1))
+}
+```
+
+#### Plot Custom Box
+
+```{r}
+plot_custom_box <- function(data, y_var, x_var = NULL, 
+                            include_na = TRUE, 
+                            xlab = NULL, 
+                            ylab = "Valor") {
+
+  y_name <- deparse(substitute(y_var))
+  y_name <- gsub("\"", "", y_name)
+
+  x_expr <- substitute(x_var)
+  if (is.null(x_expr)) {
+    x_name <- NULL
+  } else {
+    x_name <- deparse(x_expr)
+    x_name <- gsub("\"", "", x_name)
+  }
+
+  if (!include_na) {
+    if (!is.null(x_name)) {
+      data <- data[complete.cases(data[, c(x_name, y_name)]), ]
+    } else {
+      data <- data[!is.na(data[[y_name]]), ]
+    }
+  }
+
+  if (is.null(x_name)) {
+    p <- ggplot(data, aes(x = "Total", y = .data[[y_name]], fill = "Total")) +
+      scale_fill_manual(values = "#b3cde3")
+    
+    current_xlab <- if (is.null(xlab)) "" else xlab
+    
+  } else {
+    p <- ggplot(data, aes(x = as.factor(.data[[x_name]]), 
+                          y = .data[[y_name]], 
+                          fill = as.factor(.data[[x_name]]))) +
+      scale_fill_brewer(palette = "Pastel1")
+    
+    current_xlab <- if (is.null(xlab)) x_name else xlab
+  }
+
+  p +
+    geom_jitter(width = 0.2, alpha = 0.4, color = "black", na.rm = TRUE) +
+
+    geom_boxplot(alpha = 0.7, outlier.shape = NA, na.rm = TRUE) +
+
+    stat_summary(fun = mean, geom = "point", shape = 18, size = 4, 
+                 color = "#800020", na.rm = TRUE) + 
+
+    stat_summary(fun = median, geom = "text", 
+                 aes(label = round(after_stat(y), 2)), 
+                 vjust = -0.8, fontface = "bold", color = "black", na.rm = TRUE) +
+    
+    labs(x = current_xlab, y = ylab) +
+    theme_minimal() +
+    theme(
+      legend.position = "none",
+      axis.text = element_text(size = 11),
+      panel.grid.major.x = element_blank()
+    )
+}
+```
+
+#### Tabla summary
+
+```{r}
+table_summary <- function(data, group_var, numeric_var, digits = 2) {
+
+  group_v <- enquo(group_var)
+  numeric_v <- enquo(numeric_var)
+
+  col_labels <- c("Freciencia AF", "Cantidad", "Promedio", "Desviación Estandar", "Mínimo", "Q1", "Mediana", "Q3", "Máx")
+  
+  data %>%
+    group_by(!!group_v) %>%
+    summarise(
+      n = n(),
+      mean = mean(!!numeric_v, na.rm = TRUE),
+      sd = sd(!!numeric_v, na.rm = TRUE),
+      min = min(!!numeric_v, na.rm = TRUE),
+      q1 = quantile(!!numeric_v, 0.25, na.rm = TRUE),
+      median = median(!!numeric_v, na.rm = TRUE),
+      q3 = quantile(!!numeric_v, 0.75, na.rm = TRUE),
+      max = max(!!numeric_v, na.rm = TRUE)
+    ) %>%
+    kable(
+      col.names = col_labels,
+      digits = digits,
+      align = "ccccccccc",
+      booktabs = TRUE
+    ) %>%
+    kable_styling(
+      full_width = FALSE, 
+      position = "center", 
+      bootstrap_options = c("striped", "hover", "condensed")
+    )
+}
+```
+
+### Promedio Ponderado (Continua)
+
+```{r}
+descriptive_table(dt_cl, dt_cl$`Promedio ponderado`)
+```
+
+```{r}
+plot_hist_box(dt_cl, x_var = `Promedio ponderado`, include_na = F, monochrome = T, xlab = "Promedio Ponderado", show_mean = T)
+```
+
+**Análisis Descriptivo:**
+
+La variable tiene 1173 respuestas validas y 15 datos faltantes que equivale al 1.27% del total de datos, lo que hace que la variable bastante confiable totalmente confiable.
+
+El promedio del promedio ponderado es de 14.95 con una desviacion estandar de 2.36 con una mediana de 15. El rango de los datos es entre 1 a 20 con un IQR de 2.77.
+
+El histograma muestra que los datos son sesgados a la izquierda. La mayoria de los datos son valores altos, cerca a a la media.
+
+### Freciencia (discreta)
+
+```{r}
+descriptive_table(dt_cl, dt_cl$`Frecuencia AF`)
+```
+
+```{r}
+plot_hist_box(dt_cl, x_var = `Frecuencia AF` , include_na = F, monochrome = T, xlab = "Frecuencia AF", show_mean = T)
+```
+
+**Análisis Descriptivo:**
+
+La variable tiene 904 respuestas validas y 284 datos faltantes que equivale al 23.91% del total de datos, lo que hace que la variable sea regularmente cofiable.
+
+El promedio del promedio ponderado es de 3.21 con una desviacion estandar de 1.57 con una mediana de 3. El rango de los datos es entre 1 a 7 con un IQR de 2.
+
+El histograma muestra que los datos son levemente sesgados a la derecha. La mayoria de los datos son valores intermedios entre 2 y 4, cerca a a la media.
+
+# Análisis multivariado
+
+### Objetivo Específico 1
+
+> **Objetivo 1:** `Explorar la relación entre la frecuencia semanal de actividad física y el promedio ponderado en estudiantes de UTEC durante el segundo semestre del 2025.`
+
+```{r}
+plot_custom_box(dt_cl, x_var = `Frecuencia AF`, y_var = `Promedio ponderado`, ylab = 'Promedio ponerado', xlab = 'Frecuencia de Actividad Fisica', include_na = F)
+```
+
+```{r}
+table_summary(dt_cl, `Frecuencia AF`, `Promedio ponderado`)
+```
+
+El diagrama de cajas muestra la superposición entre todas las distribuciones de la frecuencia de activad física (FRECUENCIA AF, 0-7), com medianas bastante similares, oscilantentes aproximadamente entre $$\pm$$ 1 de la mediana (15).
+
+En todas las frecuencias de actividad física existen outliers que en su mayoría son inferiores.
+
+Se evidencia que los estudiantes en su mayoria realiza actividades físicas con una frecuencia entre 1 a 7. Por otro lado, exiten solo 2 estudiantes que no realizan actividades físicas a la semana, lo que no brinda mucha informacion acerca de población
+
+Finalmente, se concluye que no existe una relación fuerte entre las variables Promedio Ponderado y Frecuencias AF, cada una es independiente y define una poca importancia de las actividades fisicas para tener un buen desenvolvimiento académico.
