@@ -1,6 +1,6 @@
 ---
 title: "Influencia de la Actividad Física en el Rendimiento Académico y Bienestar de Estudiantes Universitarios"
-author: "Grupo X - PG1"
+author: "Grupo 2 - PG1"
 lang: es
 format:
   html:
@@ -22,23 +22,41 @@ editor: visual
 
 # Introducción
 
-## 1.1. Relevancia
+## Relevancia
 
-## 1.2. Objetivos
+Estudiar la relación entre actividad física, sueño, estrés y rendimiento académico en universitarios es importante porque la vida académica genera altas cargas de trabajo, estrés y hábitos poco saludables, como el sedentarismo y la falta de sueño, que afectan el bienestar y desempeño estudiantil. Diversas investigaciones señalan que la actividad física mejora la calidad del sueño y reduce el estrés académico, favoreciendo un mejor rendimiento; además, una mala calidad de sueño se relaciona significativamente con bajas calificaciones, convirtiéndose en un factor clave en el desempeño universitario.
 
-### 1.2.1. General
+## Objetivos
 
-### 1.2.2. Específicos
+### General
+
+Determinar cómo influye la actividad física que realizan los estudiantes de UTEC en su desempeño académico y bienestar integral durante el segundo semestre del 2025.
+
+### Específicos
+
+1.  Explorar la relación entre la frecuencia semanal de actividad física y el promedio ponderado en estudiantes de UTEC durante el segundo semestre del 2025.
+
+2.  Comparar el nivel de concentración autopercibido entre estudiantes que practican diferentes tipos de actividad física en UTEC durante el segundo semestre del 2025.
+
+3.  Evaluar la influencia de las horas de sueño sobre el nivel de estrés reportado en estudiantes de UTEC que realizan actividad física regular durante el segundo semestre del 2025.
 
 # Datos
 
-## 2.1. Población
+## Población
 
-## 2.2. Muestra
+Estudiantes de la Universidad de Ingeniería y Tecnología (UTEC) en el periodo 2025-2.
 
-## 2.3. Unidad muestral
+## Muestra CAMBIAR
 
-## 2.4. Tipo de muestreo
+1,045 estudiantes de la Universidad de Ingeniería y Tecnología (UTEC) en el periodo 2025-2.
+
+## Unidad muestral
+
+Cada estudiante de la Universidad de Ingeniería y Tecnología (UTEC) en el periodo 2025-2.
+
+## Tipo de muestreo
+
+Muestreo no probabilístico por conveniencia.
 
 ## 2.5. Variables
 
