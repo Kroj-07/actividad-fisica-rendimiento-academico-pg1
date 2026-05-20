@@ -1,0 +1,526 @@
+---
+title: "Parcial"
+format: html
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+**Library**
+
+```{r}
+library(readr)
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+library(ggplot2)
+```
+
+```{r}
+library(knitr)
+#library(kableExtra)
+library(rlang)
+library(stringr)
+library(DescTools)
+```
+
+**CSV**
+
+```{r}
+DF<-read_csv("Proyecto de Estadistica 1.csv")
+DF
+```
+
+# 1. Introducción
+
+## 1.1. Relevancia
+
+`Es importante equilibrar el rendimiento académico y la salud, evaluando si el consumo de café favorece el estudio o afecta el sueño y aumenta el estrés, especialmente en entornos exigentes como la UTEC.`
+
+## 1.2. Planificación
+
+```{r, echo=FALSE}
+#| label: fig-planificación
+#| fig-cap: "Planificación de tareas"
+#| fig-cap-location: top
+
+intes = c('ZZZ')
+
+plan <- data.frame(
+  Integrantes = c(
+    intes[1], intes[2], intes[3], intes[4], intes[5], 
+    intes[4], intes[5], intes[6], intes[6], intes[3], 
+    intes[2],
+    intes[2], intes[3], intes[6],
+    intes[4], intes[5],
+    intes[1], intes[1]
+  ), 
+  start = c(
+    '2026-04-09', '2026-04-12', '2026-04-12', '2026-04-12', '2026-04-12',
+    '2026-04-19', '2026-04-19', '2026-04-19', '2026-04-12', '2026-04-19',
+    '2026-04-19',
+    '2026-05-06', '2026-05-06', '2026-05-06',
+    '2026-05-11', '2026-05-11',
+    '2026-05-20', '2026-04-30'
+  ),
+  duracion = c(
+    1, 1, 1, 1, 1, 3, 3, 3, 1, 3, 3,
+    4, 4, 4,
+    6, 6,
+    4, 3
+  ),
+  Tareas = c(
+    'Elegir objetivos específicos', 'Elección de variables', 'Elección de variables', 
+    'Limpieza de data', 'Limpieza de data', 'Análisis interacción Obj 2', 
+    'Análisis interacción Obj 1', 'Análisis interacción Obj 3', 
+    'Sección de relevancia', 'Análisis Univariado', 'Análisis Univariado',
+    'Determinar espacio de resultados teórico',
+    'Determinar función de probabilidad',
+    'Analizar dependencia entre dos eventos',
+    'Modelos variables discretas',
+    'Modelos variables continuas',
+    'Correcciones para PG2',
+    'Correcciones para PG1'
+  )
+)
+
+plan$start <- as.Date(plan$start)
+plan$fecha_fin <- plan$start + plan$duracion
+plan$Integrantes <- factor(plan$Integrantes, levels = rev(intes))
+
+ggplot(plan, aes(y=Integrantes, x=start, xend=fecha_fin, color=Tareas)) +
+  geom_segment(aes(yend=Integrantes), linewidth=6) + 
+  scale_x_date(date_breaks = "1 week", date_labels = "%d-%b") +
+  theme_minimal() +
+  labs(
+    x = "Abril-Mayo 2026", 
+    y = "", 
+    title = "",
+    color = ""
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom",
+    legend.text = element_text(size = 6.5)
+  ) +
+  guides(color = guide_legend(ncol = 3))
+
+```
+
+## 1.3. Objetivos
+
+### 1.3.1. General:
+
+------------------------------------------------------------------------
+
+### 1.3.2. Específicos
+
+1.  Explorar la relación  entre la frecuencia semanal de actividad física (variable cuantitativa discreta) con el promedio ponderado (variable cuantitativa continua) en estudiantes de UTEC durante el primer semestre del 2026.
+
+2.  Comparar el nivel de autopercepción del rendimiento académico (variable cualitativa ordinal) entre estudiantes que practican diferentes tipos de deporte (variable cualitativa nominal) en UTEC durante el primer semestre del 2026.
+
+3.  Evaluar la influencia de las horas de sueño (variable cuantitativa continua) sobre el nivel de estrés reportado (variable cualitativa ordinal) en estudiantes de UTEC que realizan actividad física regular durante el primer semestre del 2026.
+
+# 2. Datos
+
+## 2.1. Población
+
+------------------------------------------------------------------------
+
+## 2.2. Muestra
+
+------------------------------------------------------------------------
+
+## 2.3. Unidad muestral
+
+------------------------------------------------------------------------
+
+## 2.4. Tipo de muestreo
+
+------------------------------------------------------------------------
+
+## 2.5. Variables
+
+------------------------------------------------------------------------
+
+## 2.6. Limpieza
+
+```{r}
+dt = read.csv("Proyecto de Estadistica 1.csv")
+```
+
+```{r}
+dt
+```
+
+### Selección de columnas útiles
+
+Primero observamos todas las columnas de dt:
+
+```{r}
+names(dt)
+```
+
+Ahora realizamos la sleleción de columnas:
+
+```{r}
+dt_p1 <- dt[, c(4, 8, 12, 13, 15, 18, 24, 28, 29, 30)]
+```
+
+```{r}
+names(dt_p1)
+```
+
+### Renombramiento de columnas
+
+Cambiamos las etiquetas de las columnas para facilitar el llamado de estos:
+
+```{r}
+colnames(dt_p1) <- c("Sexo", "Carrera", "Promedio ponderado", "Ranking", "Tipo AF", "Frecuencia AF", "Nivel de consentración", "Horas de sueño", "Calidad de sueño", "Nivel estres")
+```
+
+## Estudio y limpieza de datos
+
+```{r}
+glimpse(dt_p1)
+```
+
+### Conteo de datos nulos (null)
+
+```{r}
+colSums(is.na(dt_p1))
+```
+
+### Observacion de valores unicos por columnas
+
+```{r}
+unique(dt_p1$Sexo)
+```
+
+```{r}
+unique(dt_p1$Carrera)
+```
+
+```{r}
+unique(dt_p1$`Promedio ponderado`)
+```
+
+```{r}
+unique(dt_p1$Ranking)
+```
+
+```{r}
+unique(dt_p1$`Tipo AF`)
+```
+
+```{r}
+unique(dt_p1$`Frecuencia AF` )
+```
+
+```{r}
+unique(dt_p1$`Nivel de consentración`)
+```
+
+```{r}
+unique(dt_p1$`Horas de sueño`)
+```
+
+```{r}
+unique(dt_p1$`Calidad de sueño`)
+```
+
+```{r}
+unique(dt_p1$`Nivel estres`)
+```
+
+#### Limpiando "Promedio ponderado"
+
+```{r}
+summary(dt_p1$`Promedio ponderado`)
+```
+
+```{r}
+boxplot(dt_p1$`Promedio ponderado`)
+```
+
+```{r}
+pond_c <- dt_p1[dt_p1$`Promedio ponderado` <= 20, ]
+```
+
+```{r}
+summary(pond_c$`Promedio ponderado`)
+```
+
+```{r}
+boxplot(pond_c$`Promedio ponderado`, horizontal = T)
+```
+
+```{r}
+dt_limp <- dt_p1[dt_p1$`Promedio ponderado` <= 20, ]
+```
+
+Redondear las notas a un decimal porque el sistema acádemico solo emita las notas con un deicmal.
+
+```{r}
+dt_limp$`Promedio ponderado` <- round(dt_limp$`Promedio ponderado`, 2) 
+```
+
+```{r}
+summary(dt_limp$`Promedio ponderado`)
+```
+
+```{r}
+unique(dt_limp$`Promedio ponderado`)
+```
+
+#### Limpiando "Tipos AF"
+
+```{r}
+unique(dt_limp$`Tipo AF`)
+```
+
+Se agrupa las diferentes repsuestas en categorías de activida física, las que no son actividad fisica, se les etiquea como "Ninguno"
+
+```{r}
+library(stringr)   
+dt_limp$`Tipo AF` <- tolower(dt_limp$`Tipo AF`)   
+dt_limp$`Tipo AF`[str_detect(dt_limp$`Tipo AF`, "no realizo|p$|ajedrez|maxtro|metropolitano|barrer|paja|estiramiento|calentamiento")] <- "Ninguno"   
+dt_limp$`Tipo AF`[str_detect(dt_limp$`Tipo AF`, "gimnasio|pesas|gym|hiit|calistenia|yoga|pilates")] <- "Gimnasio"   
+dt_limp$`Tipo AF`[str_detect(dt_limp$`Tipo AF`, "caminar|caminata|escaleras|correr|nadar|ciclismo|atletismo|surf|bicicleta|running|perros")] <- "Deportes Aeróbicos"   
+dt_limp$`Tipo AF`[str_detect(dt_limp$`Tipo AF`, "fútbol|básquet|vóley|tenis|pádel|polo|marciales|equipo|badminton|sumo|arco|mesa")] <- "Deportes de Competencia"   
+dt_limp$`Tipo AF`[str_detect(dt_limp$`Tipo AF`, "danza|baile|gimnasia")] <- "Danza y Gimnasia"  
+```
+
+```{r}
+unique(dt_limp$`Tipo AF`)
+```
+
+```{r}
+dt_limp
+```
+
+#### Limpieza de "Frecuencia AF"
+
+```{r}
+summary(dt_limp$`Frecuencia AF`) 
+```
+
+Como son días a la semana, una peersona puede hacer como máximo 7 veces actividad física. Entonces los valores mayores a 7 seran tratados como nulos para no borrar informacio de otras columnas restantes.
+
+```{r}
+dt_limp$`Frecuencia AF`[dt_limp$`Frecuencia AF` > 7]<- NA
+```
+
+```{r}
+unique(dt_limp$`Frecuencia AF`)
+```
+
+```{r}
+summary(dt_limp$`Frecuencia AF`)
+```
+
+#### Limpieza de horas de sueño
+
+```{r}
+unique(dt_limp$`Horas de sueño`)
+```
+
+```{r}
+summary(dt_limp$`Horas de sueño`) 
+```
+
+Se limpian las respuestas que pasan mas de 14 horas porque se cree que un estudiante no llega a dormir esa cantidad horas frecuentemente, además se considera esas respuesta como "Trolls"( personas que simplemente respondieron sin ningún compromiso).
+
+```{r}
+dt_limp <- dt_limp[dt_limp$`Horas de sueño` >= 2 & dt_limp$`Horas de sueño` <= 14, ]
+```
+
+```{r}
+unique(dt_limp$`Horas de sueño`)
+```
+
+```{r}
+summary(dt_limp$`Horas de sueño`)
+```
+
+### Dataset limpio
+
+```{r}
+dt_limp
+```
+
+-   Orginalmente se tenía 1127líneas de de datos, luego de las limpiasas se tienen 1091 (una diferencia de 36 lineas)
+
+------------------------------------------------------------------------
+
+## 3.2. Análisis multivariado
+
+### 3.1.2. Nivel de Concentración vs Tipo de Actividad Física
+
+Mediante este análsis multivariado buscamos indagar más en nuestro segundo objetivo específico. Estamos analizando el nivel de concentración, el cual es un factor importante dentro de la autopercepción del encuestado sobre su nivel académico. Buscamos probar nuestra hipótesis; si una mejor autopercepción del desempeño se deriva de la práctica de algún tipo de deporte en específico.
+
+**`Nivel de Concentración`**
+
+Es una variable categórica ordinal; esta representa la autopercepción del encuestado con respecto a su nivel de atención durante sus clases y desempeño en tareas indivduales o trabajos grupales. No tiene unidades fijas de medición, solo podríamos decir que mide la intensidad. Dentro de la encuesta separamos estas variables en 3 categorías:
+
+```{r}
+unique(dt_limp$`Nivel de consentración`)
+```
+
+Para el análisis de esta parte, buscamos despejar lo más posible las celdas de información innecesaria, podríamos decir que los subtítulos de las opciones clasifican como innecesarios, asi que brevemente hacemos estas modificaciones en nuestro dataframe.
+
+```{r}
+dt_limp$`Nivel de consentración` <- dt_limp$`Nivel de consentración` %>% str_remove(":.*") %>%
+  factor(
+    levels = c("Bajo", "Medio", "Alto"),
+    ordered = TRUE
+  )
+dt_limp
+```
+
+**`Tipo de Actividad Física`**
+
+Es una variable categórica nominal, representa el tipo de deporte de preferencia del usuario. Más que todo, esta variable fue modificada significativamente dentro de la limpieza, hemos decidido agrupar dentro de unos conjuntos específicos a ciertas actividades físicas, para facilitar el análsis que haremos acontinuación. Los valores actuales de esta variable son:
+
+```{r}
+unique(dt_limp$`Tipo AF`)
+```
+
+Al igual que con la variable anterior, necesitamos realizar unos ajustes. Más que todo esto se debe a previos intentos de análsis es mejor agrupar a varios de los deportes en una misma categoría pues su frecuencia es bajísima comparado a las categorías de deporte más seleccionadas dentro de la encuesta. Con ello, creamos una nueva categoría que abarcase todos los deportes con frecuencia de aparición baja, decidimos nombrarla en base a una cualidad común entre todos estos deportes "Deportes Individuales"
+
+```{r}
+dt_limp$`Tipo AF`[dt_limp$`Tipo AF`%in% c("skate", "natacion", "tennis", "batería (instrumento musical) ", "bailar", "zumba", "Danza y Gimnasia")] <- "Deportes Individuales"
+
+unique(dt_limp$`Tipo AF`)
+```
+
+**`Elección de Método Gráfico`**
+
+Con nuestras variables limpias, necesitamos hacer un cruce entre ellas para analizar su relación. Para ello necesitamos realizar una gráfica que nos permita visualizar el comportamiento de esta relación. Con el conocimiento obtenido en el curso hasta este punto (Semana 8) nos decidimos por usar la gráfica Mosaico. El uso de mosaico fue definido por los siguientes factores:
+
+-   El gráfico mosaico es eficiente debido a que permite visualizar la distribución conjunta de las variables categóricas. Esto gracias a su tamaño directamente proporcional a la cantidad de datos que representa.
+
+-   El gráfico mosaico también nos permite identificar fácilmente posibles patrones de asociación entre variables. Sin embargo, es importante señalar que este tipo de visualización no constituye una prueba estadística de relación, sino únicamente una representación descriptiva de la distribución de frecuencias.
+
+Se descartaron otras representaciones gráficas como el boxplot indexado debido a la naturaleza de sus variables y un barplot, ya que este no permitía visualizar de forma conjunta la interacción entre las variables.
+
+Una vez fundamentado esto, vayamos con nuestro código.
+
+**`Gráfico Mosaicplot`**
+
+```{r}
+#| label: fig-mosaico-deporte-concentracion
+#| fig-cap: "Gráfico de Mosaico de la interacción entre Tipo de Actividad Física y Nivel de Concentración"
+#| fig-cap-location: top
+
+# 1. Preparación de la matriz cruzada filtrando posibles datos vacíos (NA)
+dt_mosaico <- dt_limp %>%
+  filter(!is.na(`Tipo AF`), !is.na(`Nivel de consentración`))
+
+matriz_cruce <- table(dt_mosaico$`Nivel de consentración`, dt_mosaico$`Tipo AF`)
+
+# 2. Renderizado del Gráfico de Mosaico
+mosaicplot(matriz_cruce, 
+           main = NULL, 
+           xlab = "Nivel de Concentración", 
+           ylab = "Tipo de Actividad Física", 
+           color = c("pink", "yellow", "lightblue"), 
+           las = 1
+           ) 
+```
+
+A partir del gráfico podemos definir nuestras variables predominantes. La población estudiantil de UTEC encuestada suele concentrarse en dos extremos, ("Ninguno" o "Gimnasio") van al gimnasio o hacen deportes. Otro deporte que también prima son los "Deportes de Competencia" aunque su concentración es moderada comparada con los otros 2. Por último, con respecto a los otros 2 grupos, "Deportes Aeróbicos" y "Deportes Individuales" estos tienen menor grosor y podríamos concluir que representan un nicho dentro de la comunidad encuestada.
+
+Ahora, enfocandonos en nuestro objetivo, este gráfico sugiere visualmente que hay una distribución homogénea relativa del nivel de concentración dentro de los tipos de actividad física. Hay un predominio del nivel medio en la mayoría de grupos. Sin embargo, estas observaciones no implican necesariamente la existencia de una relación estadísticamente significativa. No hay una cuantificación clara sobre las proporciones dentro de cada grupo y esto no facilita una comparación directa entre categorías.
+
+**`Table Cross`**
+
+Para comprobar nuestro objetivo usamos el table_cross debido a que resume de manera estructura las frecuencias y porcentajes de los conjuntos. Con ello podremos comparar los niveles de concentración dentro de cada tipo de actividad física y así poder deducir cual es más efectiva al mejorar el nivel de concentración.
+
+Con aquello dicho, hacemos la gráfica de nuestro table_cross…
+
+```{r}
+table_cross <- function(data, row_var, col_var, margin = 1, digits = 1) {
+
+  vec_row <- data[[row_var]]
+  vec_col <- data[[col_var]]
+
+  tab_n <- table(vec_row, vec_col)
+  tab_p <- prop.table(tab_n, margin = margin) * 100
+
+  # mantener estructura de matriz (IMPORTANTE)
+  result <- matrix(
+    paste0(
+      tab_n,
+      " (",
+      format(round(tab_p, digits), nsmall = digits),
+      "%)"
+    ),
+    nrow = nrow(tab_n),
+    dimnames = dimnames(tab_n)
+  )
+
+  return(as.data.frame(result))
+}
+```
+
+Ahora, lo aplicamos con nuestro dataframe:
+
+```{r}
+table_cross(
+  dt_limp,
+  "Tipo AF",
+  "Nivel de concentración",
+  margin = 1
+)
+```
+
+Hacemos la gráfica propia
+
+```{r}
+ggplot(dt_limp, aes(x = `Tipo AF`, fill = `Nivel de concentración`)) +
+  geom_bar(position = "fill") +
+  labs(y = "Proporción") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 0.05))
+```
+
+Este último gráfico es consistente con el mosaicplot mostrado previamente. Predomina la concentración del valor, implicando que existe una tendencia central estable en la mayoría de grupos, independientemente del deporte que han practicado o hasta de la no práctica de deporte, "Ninguno" también cumple aquella condición.
+
+Indagando en las variables presentes, notamos que la mayoría tiene una distribución similar, como mencionamos: predominancia del nivel medio; las proporciones de bajo y alto son comparables entre variables, salvo con Deportes Aeróbicos donde su Nivel de Concentración "Alto" tiene una mayor proporción que el de los demás, igualmente con "Ninguno", pero aplicado a Nivel de Concentracion "Bajo". Sin embargo, que en la mayoría de datos no existe una diferencia visual marcada, nos da a entender que la relación es débil. Realmente, la práctica de un deporte o la no práctica de un uno no afecta directamente en el nivel de autopercepción de la concentración.
+
+Como último comprovatorio, tenemos el cálculo del Chi-cuadrado y el tamaño de su efecto. Este chi-cuadrado nos permite determinar la existencia de una asociación estadísticamente siginifcativa entre dos variables categóricas y pudimos calcularlo gracias a que el table_cross organizó los datos categóricos en frecuencias conjuntas necesarias para aplicar esta técnica.
+
+```{r}
+tabla <- table(dt_limp$`Tipo AF`, dt_limp$`Nivel de concentración`)
+chisq.test(tabla)
+```
+
+```{r}
+CramerV(tabla)
+```
+
+Mediante el cálculo del chisq.test (o sea el Chi-cuadrado como tal) notamos que este es mayor a 0.05; este parámetro era el límite, si el valor era menor a él se podía evidenciar que había una relación. Por otro lado con el CramerV medimos su tamaño efectivo (o sea que tan fuerte sería esa relación) y como vemos es 0.06870328, lo cual indica que esta relación hubiera sido muy débil.
+
+**`Conclusiones Finales`**
+
+Los resultados obtenidos por las tablas muestran que la variable de Tipo de Actividad Física no está asociada significativamente al nivel de autopercepción de estudio en los estudiantes analizados. La ausencia de diferencias marcasdas en los resultados respaldan esta afirmación.
