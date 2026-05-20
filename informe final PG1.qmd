@@ -92,7 +92,45 @@ Muestreo no probabilístico por conveniencia.
 
 ## 3.2. Análisis Multivariado
 
+```{r}
+# Asegurar que las variables categóricas sean FACTOR
+dt_limp$Sexo <- as.factor(dt_limp$Sexo)
+dt_limp$Carrera <- as.factor(dt_limp$Carrera)
+dt_limp$Ranking <- factor(dt_limp$Ranking, ordered = TRUE)
+
+```
+
 ### 3.2.1. Análisis Multivariado 1: Sexo vs Frecuencia AF
+
+Pregunta de investigación: ¿Existen diferencias sen la frecuencia de actividad física según el sexo?
+
+```{r}
+#Tabla de resumen estadistico
+table_summary <- function(data, group_var, numeric_var){
+  data %>%
+    group by({{group_var}}) %>%
+    sumarise(
+      n=n(),
+      Media=mean({{numeric_var}}, na.rm=TRUE),
+      Mediana=median({{numeric_var}}, na.rm=TRUE),
+      DE=sd({{numeric_var }}, na.rm=TRUE),
+      Q1=quantile({{numeric_var}},0.25, na.rm=TRUE),
+      Q3=quantile({{numeric_var}},0.75, na.rm=TRUE),
+      Min=min({{numeric_var}}, na.rm=TRUE)
+      Max=max({{numeric_var}}, na.rm=TRUE),
+    )
+}
+
+table_sexo_af <- table_summary(DF,Sexo, `Frecuencia AF` )
+print(tabla_sexo_af)
+```
+
+```{r}
+ggplot(dt_limp, aes(x=Sexo, y=`Frecuencia AF`, fill=Sexo))+
+  geom_boxplot(alpha=0.7, outlier.colo="red")+
+  labs(title="Frecuencua de Actividad Física según sexo", x="Sexo", y="Frecuencia AF (días/semana)")+
+  theme_animal()
+```
 
 ### 3.2.2. Análisis Multivariado 2: Ranking vs Nivel de Estrés
 
